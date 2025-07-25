@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-const Container = styled.div`
+export const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -9,5 +9,3 @@ const Container = styled.div`
   background: #f6f8fa;
   padding: 32px 0;
 `;
-
-export default Container;

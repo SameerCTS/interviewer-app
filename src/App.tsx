@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import Container from './components/Container';
-import Title from './components/Title';
-import RoleSelector from './components/RoleSelector';
-import Accordion from './components/Accordion';
+import Container from './components/Container/Container';
+import Title from './components/Title/Title';
+import RoleSelector from './components/RoleSelector/RoleSelector';
+import Accordion from './components/Accordion/Accordion';
 import { fetchQuestions } from './api';
 
 const roles = [

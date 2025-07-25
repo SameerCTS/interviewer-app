@@ -1,18 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
-
-const List = styled.ul`
-  list-style: none;
-  padding: 0;
-`;
-const Item = styled.li`
-  background: #eaf1fb;
-  margin-bottom: 8px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  color: #2d72d9;
-  font-weight: 500;
-`;
+import { List, Item } from './QuestionList.styles';
 
 type Question = {
   question?: string;
