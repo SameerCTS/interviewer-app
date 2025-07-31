@@ -1,13 +1,10 @@
+// This script seeds the database with questions from staticQuestions in App.tsx
+// Usage: node seed.js (run from the server directory)
 
-import { useState, useEffect } from 'react';
-import Container from './components/Container/Container';
-import Title from './components/Title/Title';
-import RoleSelector from './components/RoleSelector/RoleSelector';
-import Accordion from './components/Accordion/Accordion';
-import { fetchQuestions } from './api';
+import mongoose from 'mongoose';
+import Question from './models/Question.js';
 
-// Static fallback data for each role
-const staticQuestions: Record<string, any[]> = {
+const staticQuestions = {
   HTML: [
     { question: 'What are semantic HTML elements?', answer: 'Semantic HTML elements clearly describe their meaning in a human- and machine-readable way. Examples include <header>, <footer>, <article>, and <section>.', code: '<header>Site Header</header>\n<section>Main Content</section>' },
     { question: 'How do you optimize HTML for accessibility?', answer: 'Use semantic tags, ARIA attributes, alt text for images, and proper label associations to improve accessibility.', code: '<img src="logo.png" alt="Company Logo" />\n<label htmlFor="email">Email</label>\n<input id="email" type="email" />' },
@@ -29,66 +26,39 @@ const staticQuestions: Record<string, any[]> = {
     { question: 'Explain type narrowing.', answer: 'Type narrowing uses control flow to infer more specific types for variables.', code: 'function printId(id: number | string) {\n  if (typeof id === \'string\') {\n    console.log(id.toUpperCase());\n  } else {\n    console.log(id);\n  }\n}' }
   ],
   React: [
-    { concept: 'Creating and nesting components', question: 'How do you create and nest components in React?', answer: 'You create a component by writing a JavaScript function that returns JSX. You can nest components by using them inside other components.', code: `function MyButton() {\n  return <button>I\'m a button</button>;\n}\n\nexport default function MyApp() {\n  return (\n    <div>\n      <h1>Welcome to my app</h1>\n      <MyButton />\n    </div>\n  );\n}` },
+    { concept: 'Creating and nesting components', question: 'How do you create and nest components in React?', answer: 'You create a component by writing a JavaScript function that returns JSX. You can nest components by using them inside other components.', code: `function MyButton() {\n  return <button>I\\'m a button</button>;\n}\n\nexport default function MyApp() {\n  return (\n    <div>\n      <h1>Welcome to my app</h1>\n      <MyButton />\n    </div>\n  );\n}` },
     { concept: 'Writing markup with JSX', question: 'What is JSX and how is it different from HTML?', answer: 'JSX is a syntax extension for JavaScript that looks similar to HTML but allows you to embed JavaScript expressions. JSX tags must be closed and wrapped in a single parent element.', code: `function AboutPage() {\n  return (\n    <>\n      <h1>About</h1>\n      <p>Hello there.<br />How do you do?</p>\n    </>\n  );\n}` },
     { concept: 'Adding styles', question: 'How do you add styles to React components?', answer: 'You can use the className attribute to assign CSS classes, or use inline styles with the style attribute.', code: `function Avatar() {\n  const user = {\n    name: 'Hedy Lamarr',\n    imageUrl: 'https://i.imgur.com/yXOvdOSs.jpg',\n    imageSize: 90\n  };\n  return (\n    <img\n      className=\"avatar\"\n      src={user.imageUrl}\n      alt={\`Photo of \`}\n      style={{ width: user.imageSize, height: user.imageSize }}\n    />\n  );\n}` }
   ]
 };
 
-const roles = [
-  'HTML', 'CSS', 'JavaScript', 'TypeScript', 'React'
-];
+async function seed() {
+  await mongoose.connect('mongodb://localhost:27017/interviewer-app');
+  console.log('Connected to MongoDB');
 
-// ...static data definitions (same as before, can be moved to a types file)...
+  await Question.deleteMany({});
+  console.log('Cleared existing questions');
 
-function App() {
-  const [selectedRole, setSelectedRole] = useState<string>(roles[0]);
-  const [displayedQuestions, setDisplayedQuestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchQuestionsFromApi = async (role: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchQuestions({ role, topic: undefined });
-      if (Array.isArray(data) && data.length > 0) {
-        setDisplayedQuestions(data);
-      } else {
-        setError('No questions found from server. Showing static fallback.');
-        setDisplayedQuestions(staticQuestions[role] || []);
-      }
-    } catch (err) {
-      setError('Could not load questions from server. Showing static fallback.');
-      setDisplayedQuestions(staticQuestions[role] || []);
-    } finally {
-      setLoading(false);
+  const docs = [];
+  for (const role in staticQuestions) {
+    for (const q of staticQuestions[role]) {
+      docs.push({
+        role,
+        question: q.question,
+        answer: q.answer,
+        code: q.code || '',
+        concept: q.concept || '',
+      });
     }
-  };
+  }
 
-  useEffect(() => {
-    fetchQuestionsFromApi(selectedRole);
-  }, [selectedRole]);
-
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedRole(e.target.value);
-  };
-
-  const handleRefresh = () => {
-    fetchQuestionsFromApi(selectedRole);
-  };
-
-  return (
-    <Container>
-      <Title>Interviewer Question Helper</Title>
-      <RoleSelector roles={roles} selectedRole={selectedRole} onChange={handleRoleChange} />
-      <h2>Suggested Questions for {selectedRole}</h2>
-      <button style={{marginBottom: '16px'}} onClick={handleRefresh} disabled={loading}>Show Different Questions</button>
-      {loading && <p>Loading questions...</p>}
-      {error && <p style={{color: 'red'}}>{error}</p>}
-      <Accordion items={displayedQuestions} />
-    </Container>
-  );
+  await Question.insertMany(docs);
+  console.log('Seeded questions');
+  await mongoose.disconnect();
+  console.log('Disconnected');
 }
 
-export default App;
+seed().catch(e => {
+  console.error(e);
+  process.exit(1);
+});
