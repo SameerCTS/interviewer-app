@@ -1,8 +1,12 @@
 // This script seeds the database with questions from staticQuestions in App.tsx
 // Usage: node seed.js (run from the server directory)
 
+
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 import Question from './models/Question.js';
+
+dotenv.config();
 
 const staticQuestions = {
   HTML: [
@@ -32,8 +36,10 @@ const staticQuestions = {
   ]
 };
 
+
 async function seed() {
-  await mongoose.connect('mongodb://localhost:27017/interviewer-app');
+  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/interviewer-app';
+  await mongoose.connect(uri);
   console.log('Connected to MongoDB');
 
   await Question.deleteMany({});

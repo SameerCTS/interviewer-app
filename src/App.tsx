@@ -1,51 +1,20 @@
-
 import { useState, useEffect } from 'react';
-import Container from './components/Container/Container';
-import Title from './components/Title/Title';
+import styled from 'styled-components';
 import RoleSelector from './components/RoleSelector/RoleSelector';
 import Accordion from './components/Accordion/Accordion';
 import { fetchQuestions } from './api';
-
-// Static fallback data for each role
-const staticQuestions: Record<string, any[]> = {
-  HTML: [
-    { question: 'What are semantic HTML elements?', answer: 'Semantic HTML elements clearly describe their meaning in a human- and machine-readable way. Examples include <header>, <footer>, <article>, and <section>.', code: '<header>Site Header</header>\n<section>Main Content</section>' },
-    { question: 'How do you optimize HTML for accessibility?', answer: 'Use semantic tags, ARIA attributes, alt text for images, and proper label associations to improve accessibility.', code: '<img src="logo.png" alt="Company Logo" />\n<label htmlFor="email">Email</label>\n<input id="email" type="email" />' },
-    { question: 'Explain the difference between <div> and <section>.', answer: '<div> is a generic container, while <section> is a semantic element for grouping related content.', code: '<div>Generic Container</div>\n<section>Related Content</section>' }
-  ],
-  CSS: [
-    { question: 'What is the box model?', answer: 'The box model describes how elements are rendered: content, padding, border, and margin.', code: 'div {\n  margin: 10px;\n  border: 1px solid #ccc;\n  padding: 8px;\n}' },
-    { question: 'How do you create a responsive layout?', answer: 'Use media queries, flexible grids, and relative units like %, em, or rem.', code: '@media (max-width: 600px) {\n  .container {\n    flex-direction: column;\n  }\n}' },
-    { question: 'Explain CSS specificity.', answer: 'Specificity determines which CSS rule applies if multiple rules match. Inline styles are most specific, followed by IDs, then classes, then elements.', code: '#main { color: red; }\n.main { color: blue; }\ndiv { color: green; }' }
-  ],
-  JavaScript: [
-    { question: 'What is closure in JavaScript?', answer: 'A closure is a function that remembers variables from its outer scope even after the outer function has finished executing.', code: 'function outer() {\n  let count = 0;\n  return function inner() {\n    count++;\n    return count;\n  }\n}' },
-    { question: 'Explain event delegation.', answer: 'Event delegation allows you to handle events at a parent level instead of individual child elements, improving performance.', code: "document.querySelector('ul').addEventListener('click', function(e) {\n  if (e.target.tagName === 'LI') {\n    // handle click\n  }\n});" },
-    { question: 'What are promises and how do you use them?', answer: 'Promises represent asynchronous operations. Use .then() and .catch() to handle results and errors.', code: "fetch('/api/data')\n  .then(res => res.json())\n  .then(data => console.log(data))\n  .catch(err => console.error(err));" }
-  ],
-  TypeScript: [
-    { question: 'What are TypeScript interfaces?', answer: 'Interfaces define the shape of objects, specifying property names and types.', code: 'interface User {\n  name: string;\n  age: number;\n}' },
-    { question: 'How does TypeScript improve code quality?', answer: 'TypeScript adds static type checking, catching errors at compile time and improving maintainability.', code: "let age: number = 25;\nage = 'twenty'; // Error" },
-    { question: 'Explain type narrowing.', answer: 'Type narrowing uses control flow to infer more specific types for variables.', code: 'function printId(id: number | string) {\n  if (typeof id === \'string\') {\n    console.log(id.toUpperCase());\n  } else {\n    console.log(id);\n  }\n}' }
-  ],
-  React: [
-    { concept: 'Creating and nesting components', question: 'How do you create and nest components in React?', answer: 'You create a component by writing a JavaScript function that returns JSX. You can nest components by using them inside other components.', code: `function MyButton() {\n  return <button>I\'m a button</button>;\n}\n\nexport default function MyApp() {\n  return (\n    <div>\n      <h1>Welcome to my app</h1>\n      <MyButton />\n    </div>\n  );\n}` },
-    { concept: 'Writing markup with JSX', question: 'What is JSX and how is it different from HTML?', answer: 'JSX is a syntax extension for JavaScript that looks similar to HTML but allows you to embed JavaScript expressions. JSX tags must be closed and wrapped in a single parent element.', code: `function AboutPage() {\n  return (\n    <>\n      <h1>About</h1>\n      <p>Hello there.<br />How do you do?</p>\n    </>\n  );\n}` },
-    { concept: 'Adding styles', question: 'How do you add styles to React components?', answer: 'You can use the className attribute to assign CSS classes, or use inline styles with the style attribute.', code: `function Avatar() {\n  const user = {\n    name: 'Hedy Lamarr',\n    imageUrl: 'https://i.imgur.com/yXOvdOSs.jpg',\n    imageSize: 90\n  };\n  return (\n    <img\n      className=\"avatar\"\n      src={user.imageUrl}\n      alt={\`Photo of \`}\n      style={{ width: user.imageSize, height: user.imageSize }}\n    />\n  );\n}` }
-  ]
-};
+import { staticQuestions } from './data/staticQuestions';
 
 const roles = [
-  'HTML', 'CSS', 'JavaScript', 'TypeScript', 'React'
+  'HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Redux', 'Coding Test'
 ];
-
-// ...static data definitions (same as before, can be moved to a types file)...
 
 function App() {
   const [selectedRole, setSelectedRole] = useState<string>(roles[0]);
   const [displayedQuestions, setDisplayedQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showError, setShowError] = useState(false);
 
   const fetchQuestionsFromApi = async (role: string) => {
     setLoading(true);
@@ -55,12 +24,14 @@ function App() {
       if (Array.isArray(data) && data.length > 0) {
         setDisplayedQuestions(data);
       } else {
-        setError('No questions found from server. Showing static fallback.');
         setDisplayedQuestions(staticQuestions[role] || []);
+        setError('No questions found from server. Showing static questions.');
+        setShowError(true);
       }
     } catch (err) {
-      setError('Could not load questions from server. Showing static fallback.');
       setDisplayedQuestions(staticQuestions[role] || []);
+      setError('Could not load questions from server. Showing static questions.');
+      setShowError(true);
     } finally {
       setLoading(false);
     }
@@ -70,6 +41,15 @@ function App() {
     fetchQuestionsFromApi(selectedRole);
   }, [selectedRole]);
 
+  useEffect(() => {
+    if (showError) {
+      const timer = setTimeout(() => {
+        setShowError(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showError]);
+
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedRole(e.target.value);
   };
@@ -78,17 +58,103 @@ function App() {
     fetchQuestionsFromApi(selectedRole);
   };
 
+  useEffect(() => {
+    document.title = 'EvalEase – Interviewer App';
+  }, []);
+
   return (
-    <Container>
-      <Title>Interviewer Question Helper</Title>
-      <RoleSelector roles={roles} selectedRole={selectedRole} onChange={handleRoleChange} />
-      <h2>Suggested Questions for {selectedRole}</h2>
-      <button style={{marginBottom: '16px'}} onClick={handleRefresh} disabled={loading}>Show Different Questions</button>
-      {loading && <p>Loading questions...</p>}
-      {error && <p style={{color: 'red'}}>{error}</p>}
-      <Accordion items={displayedQuestions} />
-    </Container>
+    <MainWrapper>
+      <HeaderSection>
+        <SiteTitle>EvalEase</SiteTitle>
+        <SiteSubtitle>Streamline your technical interviews</SiteSubtitle>
+      </HeaderSection>
+      <ContentCard>
+        <RoleSelector roles={roles} selectedRole={selectedRole} onChange={handleRoleChange} />
+        <h2 style={{marginBottom: '16px', color: '#2d3a4a', fontWeight: 600}}>Suggested Questions for {selectedRole}</h2>
+        <RefreshButton onClick={handleRefresh} disabled={loading}>Show Different Questions</RefreshButton>
+        {loading && <p style={{color:'#2d72d9'}}>Loading questions...</p>}
+        {error && showError && (
+          <ErrorMessage className="fade-error">{error}</ErrorMessage>
+        )}
+        <Accordion items={displayedQuestions} />
+      </ContentCard>
+    </MainWrapper>
   );
 }
+
+// Styled-components for main layout
+const MainWrapper = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e3eafc 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+`;
+
+const HeaderSection = styled.header`
+  width: 100%;
+  padding: 48px 0 24px 0;
+  text-align: center;
+  background: none;
+`;
+
+const SiteTitle = styled.h1`
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #2d3a4a;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+`;
+
+const SiteSubtitle = styled.p`
+  font-size: 1.25rem;
+  color: #4b5a6a;
+  margin-bottom: 0;
+`;
+
+const ContentCard = styled.div`
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(44, 62, 80, 0.08);
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 700px;
+  width: 100%;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const RefreshButton = styled.button`
+  background: #e3eafc;
+  color: #2d3a4a;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.06);
+  transition: background 0.2s, box-shadow 0.2s;
+  &:hover:not(:disabled) {
+    background: #2d3a4a;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.12);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorMessage = styled.p`
+  color: #d7263d;
+  font-weight: 500;
+  margin: 0 0 12px 0;
+  transition: opacity 0.5s;
+`;
 
 export default App;
